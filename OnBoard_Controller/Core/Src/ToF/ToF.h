@@ -16,12 +16,16 @@ extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
+//#include <stdbool.h>
 
 /* Exported defines ----------------------------------------------------------*/
 
 /* Exported functions --------------------------------------------------------*/
 void MX_TOF_Init(void);
 long MX_TOF_Process(void);
+
+long ToF_Process_IT(void);
+void ToF_Start_IT();
 
 #ifdef __cplusplus
 }
