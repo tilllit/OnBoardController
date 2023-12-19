@@ -30,6 +30,9 @@
 
 extern Sensors SENS;	// Sensor data
 
+
+// Define ToF in polling or interrupt mode
+
 //#define ToF_Polling
 #define ToF_Interrupt
 
