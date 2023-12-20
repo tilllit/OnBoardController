@@ -36,6 +36,7 @@ extern Sensors SENS;	// Sensor data
 //#define ToF_Polling
 #define ToF_Interrupt
 
+// ToF new data flag
 extern volatile uint8_t ToF_EventDetected;
 
 /* USER CODE END Includes */
