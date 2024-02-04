@@ -127,13 +127,17 @@ void resetAMT22(SPI_HandleTypeDef *hspi, GPIO_TypeDef* encoderPort, uint16_t enc
 
 
 // Delay function
-void delay(TIM_HandleTypeDef *timer, uint32_t delayTime){
+void delay(TIM_HandleTypeDef *timer, uint32_t delayTime)
+{
 	uint32_t startTime = __HAL_TIM_GET_COUNTER(timer); 	//reference point to count passed time
 	uint32_t passedTime  = 0;
 
-	while (passedTime<delayTime){
+	while (passedTime < delayTime)
+	{
 		passedTime = __HAL_TIM_GET_COUNTER(timer) - startTime;
-		if (passedTime<0){
+
+		if (passedTime < 0)
+		{
 			passedTime +=timer->Init.Period;
 		}
 	}
