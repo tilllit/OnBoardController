@@ -25,6 +25,7 @@ extern "C" {
 #define TIMING_BUDGET (30U) /* 10 ms < TimingBudget < 200 ms */
 #define POLLING_PERIOD (250U) /* refresh rate for polling mode (ms, shall be consistent with TimingBudget value) */
 
+
 //#define App_Print		// Activate application print functionality
 
 /* Private variables ---------------------------------------------------------*/
@@ -92,12 +93,16 @@ static void MX_53L4A1_SimpleRanging_Init(void)
   HAL_GPIO_WritePin(VL53L4A1_XSHUT_C_PORT, VL53L4A1_XSHUT_C_PIN, GPIO_PIN_SET);
   HAL_Delay(2);
 
+#ifdef App_Print
   printf("53L4A1 Simple Ranging demo application\n");
+#endif
   status = VL53L4A1_RANGING_SENSOR_Init(VL53L4A1_DEV_CENTER);
 
   if (status != BSP_ERROR_NONE)
   {
-    printf("VL53L4A1_RANGING_SENSOR_Init failed\n");
+#ifdef App_Print
+	  printf("VL53L4A1_RANGING_SENSOR_Init failed\n");
+#endif
     while (1);
   }
 }
@@ -124,7 +129,9 @@ static long MX_53L4A1_SimpleRanging_Process(void)
 
   if (status != BSP_ERROR_NONE)
   {
+#ifdef App_Print
     printf("VL53L4A1_RANGING_SENSOR_Start failed\n");
+#endif
     while (1);
   }
 
@@ -135,8 +142,9 @@ static long MX_53L4A1_SimpleRanging_Process(void)
 
     if (status == BSP_ERROR_NONE)
     {
-      //print_result(&Result);
+#ifdef App_Print
       printf("Distance: %li, \r\n", (long)Result.ZoneResult[0].Distance[0]);
+#endif
     }
 
     //HAL_Delay(POLLING_PERIOD);
@@ -171,7 +179,9 @@ void ToF_Start_IT()
 
 	  if (status != BSP_ERROR_NONE)
 	  {
+#ifdef App_Print
 	    printf("VL53L4A1_RANGING_SENSOR_Start failed\n");
+#endif
 	    while (1);
 	  }
 }
@@ -198,52 +208,6 @@ long ToF_Process_IT(void)
 
 
 
-
-
-
-
-#ifdef App_Print
-
-// Printing measured data
-static void print_result(RANGING_SENSOR_Result_t *Result)
-{
-  uint8_t i;
-  uint8_t j;
-
-  for (i = 0; i < RANGING_SENSOR_MAX_NB_ZONES; i++)
-  {
-    printf("\nTargets = %lu", (unsigned long)Result->ZoneResult[i].NumberOfTargets);
-
-    for (j = 0; j < Result->ZoneResult[i].NumberOfTargets; j++)
-    {
-      printf("\n |---> ");
-
-      printf("Status = %ld, Distance = %5ld mm ",
-             (long)Result->ZoneResult[i].Status[j],
-             (long)Result->ZoneResult[i].Distance[j]);
-
-      if (Profile.EnableAmbient)
-        printf(", Ambient = %ld.%02ld kcps/spad",
-               (long)Result->ZoneResult[i].Ambient[j],
-               (long)decimal_part(Result->ZoneResult[i].Ambient[j]));
-
-      if (Profile.EnableSignal)
-        printf(", Signal = %ld.%02ld kcps/spad",
-               (long)Result->ZoneResult[i].Signal[j],
-               (long)decimal_part(Result->ZoneResult[i].Signal[j]));
-    }
-  }
-  printf("\n");
-}
-
-// Hilfsfunktion
-static int32_t decimal_part(float_t x)
-{
-  int32_t int_part = (int32_t) x;
-  return (int32_t)((x - int_part) * 100);
-}
-
-#endif
 
 
 #ifdef __cplusplus
