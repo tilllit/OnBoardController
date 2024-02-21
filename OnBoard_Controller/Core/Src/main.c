@@ -29,6 +29,7 @@
 /* USER CODE BEGIN Includes */
 
 #include <stdio.h>
+#include "math.h"
 
 #include "Data.h"
 #include "AMT22.h"		// Angular sensor (Decoder)
@@ -192,16 +193,42 @@ int main(void)
 		  if (cnt > 120) { cnt = (uint8_t)0; }
 		  else { cnt += (uint8_t) 1; }
 
-		  tx_buf[0] = (uint8_t) cnt;
-		  tx_buf[1] = 0;
-		  tx_buf[2] = (uint8_t) cnt+5;
-		  tx_buf[3] = 0;
+//		  tx_buf[0] = (uint8_t) cnt;
+//		  tx_buf[1] = 0;
+//		  tx_buf[2] = (uint8_t) cnt+5;
+//		  tx_buf[3] = 0;
 
-//		  uint16_t deg = ((uint16_t) SENS.Angle);
-//		  		  tx_buf[0] = (uint8_t) deg;
-//		  		  tx_buf[1] = (uint8_t) deg>>8;
-//		  		  tx_buf[2] = (uint8_t) cnt+5;
-//		  		  tx_buf[3] = 0;
+
+
+
+#ifdef ToF_Interrupt
+	  // ToF (interrupt)
+	  if (ToF_EventDetected != 0)
+	  {
+		  SENS.Distance = (uint16_t) ToF_Process_IT();
+		  //HAL_Delay(50);
+	  }
+#endif
+
+
+	  if(ENCFlag == 1)
+	  {
+		  ENCFlag = 0;
+		  // Angle (polling)
+		  SENS.Angle = getPositionSPI(&hspi1, CS_ENC_GPIO_Port, CS_ENC_Pin, (uint8_t) 0xFFFF, &htim1);
+	  }
+
+
+
+	  	  int32_t degrees = round(SENS.Angle);
+		  uint16_t deg = ((uint16_t) degrees);
+		  uint16_t x = SENS.Distance;
+		  		  tx_buf[0] = (uint8_t) deg;
+		  		  tx_buf[1] =  deg>>8;
+//		  		  tx_buf[0] = (uint8_t) 5;
+//		  		  tx_buf[1] = (uint8_t) 5;
+		  		  tx_buf[2] = (uint8_t) x;
+		  		  tx_buf[3] =  x>>8;
 
 		  TXFlag = 0;
 		  ENCFlag = 1;
@@ -235,12 +262,12 @@ int main(void)
 //		  SENS.Angle = getPositionSPI(&hspi1, CS_ENC_GPIO_Port, CS_ENC_Pin, (uint8_t) 0xFFFF, &htim1);
 //	  }
 //
-//#ifdef UART_DEBUG
-//	  printf("Angle:%0.2f, "
-//			  "Distance:%i\r\n",
-//			  SENS.Angle,
-//			  SENS.Distance);
-//#endif
+#ifdef UART_DEBUG
+	  printf("Angle:%0.2f, "
+			  "Distance:%i\r\n",
+			  SENS.Angle,
+			  SENS.Distance);
+#endif
 
 
 
