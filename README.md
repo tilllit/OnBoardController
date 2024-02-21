@@ -2,4 +2,4 @@ SW of OnBoard Controller
 
 ToDo:
 
-- Daa buffer communication
+- Data buffer Kommunikation bereinigen
