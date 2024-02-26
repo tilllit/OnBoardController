@@ -149,6 +149,8 @@ int main(void)
   MX_TOF_Init();
   HAL_TIM_Base_Start(&htim1);
 
+  setZeroSPI(&hspi1, CS_ENC_GPIO_Port, CS_ENC_Pin, &htim1);
+
 
 #ifdef ToF_Interrupt
 	  // ToF (interrupt)
