@@ -15,7 +15,7 @@ typedef struct{
 
 	// Attributes
 	uint16_t	Distance;
-	float	Angle;
+	float		Angle;
 
 } Sensors;
 
