@@ -1,5 +1,6 @@
-SW of OnBoard Controller
+# SW - OnBoard Controller
 
-ToDo:
+- Reading capacitive absolute encoder
+- Reading ToF distance sensor
 
-- Data buffer Kommunikation bereinigen
+- SPI-Slave functionality for data transition
