@@ -15,7 +15,6 @@
 #define RES14           14
 
 
-//extern Sensors SENS;
 
 
 // Set Chip Select Pin
@@ -23,6 +22,7 @@ void setCSLine (GPIO_TypeDef* encoderPort, uint16_t encoderPin, GPIO_PinState cs
 {
 	HAL_GPIO_WritePin(encoderPort, encoderPin, csLine);
 }
+
 
 // SPI-Communication Function
 uint8_t spiWriteRead(SPI_HandleTypeDef *hspi, uint8_t sendByte, GPIO_TypeDef* encoderPort, uint16_t encoderPin, uint8_t releaseLine, TIM_HandleTypeDef *timer)
@@ -35,17 +35,18 @@ uint8_t spiWriteRead(SPI_HandleTypeDef *hspi, uint8_t sendByte, GPIO_TypeDef* en
 
   //There is a minimum time requirement after CS goes low before data can be clocked out of the encoder.
   delay(timer, 3);
-  //HAL_Delay(0.005);
+
   //send the command and receive response of the slave
   HAL_SPI_TransmitReceive(hspi, &sendByte, &data, 1, 10);
 
   //There is also a minimum time after clocking that CS should remain asserted before we release it
   delay(timer, 3);
-  //HAL_Delay(0.005);
+
   setCSLine(encoderPort, encoderPin, releaseLine); //if releaseLine is high set it high else it stays low
 
   return data;
 }
+
 
 // Get Position
 float getPositionSPI(SPI_HandleTypeDef *hspi, GPIO_TypeDef* encoderPort, uint16_t encoderPin, uint8_t resolution, TIM_HandleTypeDef *timer)
@@ -93,10 +94,9 @@ float getPositionSPI(SPI_HandleTypeDef *hspi, GPIO_TypeDef* encoderPort, uint16_
 float calAngle(uint16_t curPos)
 {
 	float angle = (float) curPos  / 45.4;
-	//float angle = (2^14) / curPos;
-	//return (float) curPos;
 	return angle;
 }
+
 
 // Zero Position
 void setZeroSPI(SPI_HandleTypeDef *hspi, GPIO_TypeDef* encoderPort, uint16_t encoderPin, TIM_HandleTypeDef *timer)
@@ -108,9 +108,9 @@ void setZeroSPI(SPI_HandleTypeDef *hspi, GPIO_TypeDef* encoderPort, uint16_t enc
 
   spiWriteRead(hspi, AMT22_ZERO, encoderPort, encoderPin, 1, timer);
 
-
   delay(timer, 250);
 }
+
 
 // Reset Sensor
 void resetAMT22(SPI_HandleTypeDef *hspi, GPIO_TypeDef* encoderPort, uint16_t encoderPin, TIM_HandleTypeDef *timer)

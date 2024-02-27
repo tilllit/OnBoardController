@@ -11,7 +11,6 @@ extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-//#include "app_tof.h"
 #include "ToF.h"
 #include "main.h"
 #include <stdio.h>
@@ -22,11 +21,14 @@ extern "C" {
 /* Private typedef -----------------------------------------------------------*/
 
 /* Private define ------------------------------------------------------------*/
-#define TIMING_BUDGET (30U) /* 10 ms < TimingBudget < 200 ms */
+#define TIMING_BUDGET (30U)   /* 10 ms < TimingBudget < 200 ms */
 #define POLLING_PERIOD (250U) /* refresh rate for polling mode (ms, shall be consistent with TimingBudget value) */
 
 
-//#define App_Print		// Activate application print functionality
+
+//#define App_Print		// Application debugging
+
+
 
 /* Private variables ---------------------------------------------------------*/
 static RANGING_SENSOR_Capabilities_t Cap;
@@ -43,6 +45,12 @@ static long MX_53L4A1_SimpleRanging_Process(void);
 static void print_result(RANGING_SENSOR_Result_t *Result);
 static int32_t decimal_part(float_t x);
 #endif
+
+
+
+// ########## Library port of STM ToF application ##########
+
+
 
 void MX_TOF_Init(void)
 {
@@ -63,6 +71,7 @@ void MX_TOF_Init(void)
   /* USER CODE END TOF_Init_PostTreatment */
 }
 
+
 /*
  * LM background task
  */
@@ -78,6 +87,7 @@ long MX_TOF_Process(void)
 
   /* USER CODE END TOF_Process_PostTreatment */
 }
+
 
 static void MX_53L4A1_SimpleRanging_Init(void)
 {
@@ -96,6 +106,7 @@ static void MX_53L4A1_SimpleRanging_Init(void)
 #ifdef App_Print
   printf("53L4A1 Simple Ranging demo application\n");
 #endif
+
   status = VL53L4A1_RANGING_SENSOR_Init(VL53L4A1_DEV_CENTER);
 
   if (status != BSP_ERROR_NONE)
@@ -103,9 +114,11 @@ static void MX_53L4A1_SimpleRanging_Init(void)
 #ifdef App_Print
 	  printf("VL53L4A1_RANGING_SENSOR_Init failed\n");
 #endif
+
     while (1);
   }
 }
+
 
 static long MX_53L4A1_SimpleRanging_Process(void)
 {
@@ -132,6 +145,7 @@ static long MX_53L4A1_SimpleRanging_Process(void)
 #ifdef App_Print
     printf("VL53L4A1_RANGING_SENSOR_Start failed\n");
 #endif
+
     while (1);
   }
 
@@ -145,6 +159,7 @@ static long MX_53L4A1_SimpleRanging_Process(void)
 #ifdef App_Print
       printf("Distance: %li, \r\n", (long)Result.ZoneResult[0].Distance[0]);
 #endif
+
     }
 
     //HAL_Delay(POLLING_PERIOD);
@@ -156,6 +171,9 @@ static long MX_53L4A1_SimpleRanging_Process(void)
 
 
 
+
+
+// ########## User implementation ##########
 
 
 
@@ -186,6 +204,7 @@ void ToF_Start_IT()
 	  }
 }
 
+
 long ToF_Process_IT(void)
 {
 
@@ -202,10 +221,6 @@ long ToF_Process_IT(void)
     	return 0;
     }
 }
-
-
-
-
 
 
 

@@ -31,23 +31,9 @@
 #include <stdio.h>
 #include "math.h"
 
-#include "Data.h"
-#include "AMT22.h"		// Angular sensor (Decoder)
+#include "Data.h"		// Data structure
+#include "AMT22.h"		// Angular sensor (Encoder)
 #include "ToF.h"		// Distance sensor (ToF)
-
-extern Sensors SENS;	// Sensor data
-
-
-// Define ToF in polling or interrupt mode
-
-//#define ToF_Polling
-#define ToF_Interrupt
-
-// Activate UART debugging
-//#define UART_DEBUG
-
-// ToF new data flag
-extern volatile uint8_t ToF_EventDetected;
 
 /* USER CODE END Includes */
 
@@ -56,40 +42,49 @@ extern volatile uint8_t ToF_EventDetected;
 
 
 
-
-
-
-
-uint8_t spi_buf[8] = {0,0,0,0,0};
-//uint8_t tx_buf[5];
-uint8_t tx_buf[4] = 	 { (uint8_t) 1, (uint8_t)2, (uint8_t)3, (uint8_t)4};
-uint8_t* pTX_Buff;
-uint8_t cnt = 0;
-uint8_t TXFlag = 1;
-
-uint8_t ENCFlag = 1;
-
-
-
-
-
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
+// ###############################################
+// ########### Activate UART debugging ###########
+// ###############################################
+
+//#define UART_DEBUG
+
+
+// ###############################################
+// ### Define ToF in polling or interrupt mode ###
+// ###############################################
+
+//#define ToF_Polling
+#define ToF_Interrupt
 
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
 
+extern Sensors SENS;						// Sensor data
 
+extern volatile uint8_t ToF_EventDetected;	// ToF RX data flag
+
+uint8_t ENCFlag = 1;						// Encoder RX data flag
+
+uint8_t TXFlag = 1;							// SPI RX data flag
 
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+
+uint8_t spi_buf[8] = {0,0,0,0,0};
+
+uint8_t tx_buf[4]  = { (uint8_t) 1, (uint8_t)2, (uint8_t)3, (uint8_t)4};
+
+uint8_t *pTX_Buff  = (uint8_t*) &tx_buf;		// Pointer to SPI TX buffer
 
 /* USER CODE END PV */
 
@@ -142,18 +137,15 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
 
-  pTX_Buff = (uint8_t*) &tx_buf;	// Pointer to TX buffer (SPI-Nucleo)
-
-
   // Initialize Sensors
   MX_TOF_Init();
   HAL_TIM_Base_Start(&htim1);
 
+  // Encoder offset compensation
   setZeroSPI(&hspi1, CS_ENC_GPIO_Port, CS_ENC_Pin, &htim1);
 
 
-#ifdef ToF_Interrupt
-	  // ToF (interrupt)
+#ifdef ToF_Interrupt	// ToF (interrupt)
   	  ToF_Start_IT();
 #endif
 
@@ -165,105 +157,51 @@ int main(void)
   while (1)
   {
 
-
-
-
 	  // #################################
 	  // ##########   SPI-COM   ##########
 	  // #################################
 
 
-
-	  // #####   LED for test purpuse   #####
-
-	  // LED an bei graden zahlen ...
-//	  if (spi_buf[1] % 2 == 0)
-//	  {
-//		  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
-//	  }
-//	  // aus bei ungeraden ...
-//	  else
-//	  {
-//		  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
-//	  }
-
-
-	  // SPI COM-Flag
-	  if(TXFlag == 1)
+	  if (TXFlag == 1)		// SPI COM-Flag (TX-RX-complete)
 	  {
-		  // Counter for test purpose
-		  if (cnt > 120) { cnt = (uint8_t)0; }
-		  else { cnt += (uint8_t) 1; }
-
-//		  tx_buf[0] = (uint8_t) cnt;
-//		  tx_buf[1] = 0;
-//		  tx_buf[2] = (uint8_t) cnt+5;
-//		  tx_buf[3] = 0;
 
 
+#ifdef ToF_Interrupt		// ToF (interrupt)
 
-
-#ifdef ToF_Interrupt
-	  // ToF (interrupt)
 	  if (ToF_EventDetected != 0)
 	  {
+		  // collect data when flag is set
 		  SENS.Distance = (uint16_t) ToF_Process_IT();
-		  //HAL_Delay(50);
 	  }
 #endif
 
 
-	  if(ENCFlag == 1)
+	  if(ENCFlag == 1)		// Poll encoder data
 	  {
 		  ENCFlag = 0;
-		  // Angle (polling)
 		  SENS.Angle = getPositionSPI(&hspi1, CS_ENC_GPIO_Port, CS_ENC_Pin, (uint8_t) 0xFFFF, &htim1);
 	  }
 
+	  // Data preparation
+	  uint16_t deg	= round(SENS.Angle);
+	  uint16_t x 	= SENS.Distance;
 
+	  // Filling bytes of TX buffer
+	  tx_buf[0] = (uint8_t) deg;
+	  tx_buf[1] =  deg >> 8;
+	  tx_buf[2] = (uint8_t) x;
+	  tx_buf[3] =  x >> 8;
 
-	  	  int32_t degrees = round(SENS.Angle);
-		  uint16_t deg = ((uint16_t) degrees);
-		  uint16_t x = SENS.Distance;
-		  		  tx_buf[0] = (uint8_t) deg;
-		  		  tx_buf[1] =  deg>>8;
-//		  		  tx_buf[0] = (uint8_t) 5;
-//		  		  tx_buf[1] = (uint8_t) 5;
-		  		  tx_buf[2] = (uint8_t) x;
-		  		  tx_buf[3] =  x>>8;
+	  // Reset flags
+	  TXFlag = 0;
+	  ENCFlag = 1;
 
-		  TXFlag = 0;
-		  ENCFlag = 1;
-		  HAL_SPI_TransmitReceive_DMA(&hspi2, (uint8_t *) pTX_Buff, (uint8_t*)&spi_buf, 4);
-
-
-
+	  // DMA SPI - transmit receive
+	  HAL_SPI_TransmitReceive_DMA(&hspi2, (uint8_t *) pTX_Buff, (uint8_t*) &spi_buf, 4);
 
 
 
-//#ifdef ToF_Polling
-//	  // ToF (polling)
-//	  SENS.Distance = MX_TOF_Process();
-//#endif
-//
-//
-//#ifdef ToF_Interrupt
-//	  // ToF (interrupt)
-//	  if (ToF_EventDetected != 0)
-//	  {
-//		  SENS.Distance = ToF_Process_IT();
-//		  HAL_Delay(50);
-//	  }
-//#endif
-//
-//
-//	  if(ENCFlag == 1)
-//	  {
-//		  ENCFlag = 0;
-//		  // Angle (polling)
-//		  SENS.Angle = getPositionSPI(&hspi1, CS_ENC_GPIO_Port, CS_ENC_Pin, (uint8_t) 0xFFFF, &htim1);
-//	  }
-//
+// ##### Optional UART output #####
 #ifdef UART_DEBUG
 	  printf("Angle:%0.2f, "
 			  "Distance:%i\r\n",
@@ -271,21 +209,7 @@ int main(void)
 			  SENS.Distance);
 #endif
 
-
-
-
-
-
-
-
-
 	  }
-
-
-
-
-
-
 
     /* USER CODE END WHILE */
 
